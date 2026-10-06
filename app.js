@@ -66,31 +66,46 @@ function openSetDetails(id){
 
 function openWeightPicker(id){
   const p=products.find(x=>x.id===id); if(!p)return;
+  const is100g=p.unit==="100 г";
+  const presets=is100g
+    ? [{v:1,l:"100 г"},{v:2,l:"200 г"},{v:3,l:"300 г"},{v:5,l:"500 г"},{v:10,l:"1 кг"}]
+    : [{v:.5,l:"0,5 кг"},{v:1,l:"1 кг"},{v:1.5,l:"1,5 кг"},{v:2,l:"2 кг"},{v:3,l:"3 кг"}];
+  const step=is100g?1:.5;
+  const min=is100g?1:.5;
+  const labelFor=q=>is100g?(q>=10&&q%10===0?`${q/10} кг`:`${Math.round(q*100)} г`):`${String(q).replace(".",",")} кг`;
+
   let modal=$("#weightModal");
   if(!modal){
     modal=document.createElement("div"); modal.id="weightModal"; modal.className="modal hidden";
-    modal.innerHTML='<div class="modal-card weight-card"><div class="drawer-head"><div><h2 id="weightTitle"></h2><p>Выберите нужный вес</p></div><button id="closeWeight" class="icon-btn">✕</button></div><div class="weight-presets"><button data-weight="0.5">0,5 кг</button><button data-weight="1">1 кг</button><button data-weight="1.5">1,5 кг</button><button data-weight="2">2 кг</button><button data-weight="3">3 кг</button></div><div class="weight-stepper"><button id="weightMinus">−</button><strong id="weightValue">1 кг</strong><button id="weightPlus">+</button></div><div class="weight-total">Сумма: <strong id="weightTotal"></strong></div><button id="confirmWeight" class="primary full">Добавить в корзину</button></div>';
+    modal.innerHTML='<div class="modal-card weight-card"><div class="drawer-head"><div><h2 id="weightTitle"></h2><p>Выберите нужный вес</p></div><button id="closeWeight" class="icon-btn">✕</button></div><div id="weightPresets" class="weight-presets"></div><div class="weight-stepper"><button id="weightMinus">−</button><strong id="weightValue"></strong><button id="weightPlus">+</button></div><div class="weight-total">Сумма: <strong id="weightTotal"></strong></div><button id="confirmWeight" class="primary full">Добавить в корзину</button></div>';
     document.body.appendChild(modal);
     $("#closeWeight").onclick=()=>modal.classList.add("hidden");
     modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.add("hidden")});
   }
-  let weight=1;
+
+  let qty=is100g?1:1;
+  $("#weightPresets").innerHTML=presets.map(x=>`<button data-weight="${x.v}">${x.l}</button>`).join("");
   const refresh=()=>{
-    $("#weightValue").textContent=(Number.isInteger(weight)?weight:weight.toFixed(1).replace(".",","))+" кг";
-    $("#weightTotal").textContent=rub(Math.round(p.price*weight));
-    document.querySelectorAll("[data-weight]").forEach(b=>b.classList.toggle("active",+b.dataset.weight===weight));
+    $("#weightValue").textContent=labelFor(qty);
+    $("#weightTotal").textContent=rub(Math.round(p.price*qty));
+    document.querySelectorAll("[data-weight]").forEach(b=>b.classList.toggle("active",+b.dataset.weight===qty));
   };
   $("#weightTitle").textContent=`${p.emoji} ${p.name}`;
-  document.querySelectorAll("[data-weight]").forEach(b=>b.onclick=()=>{weight=+b.dataset.weight;refresh()});
-  $("#weightMinus").onclick=()=>{weight=Math.max(.5,Math.round((weight-.5)*10)/10);refresh()};
-  $("#weightPlus").onclick=()=>{weight=Math.round((weight+.5)*10)/10;refresh()};
-  $("#confirmWeight").onclick=()=>{cart[id]=Math.round(((cart[id]||0)+weight)*10)/10;persist();toast(`Добавлено: ${String(weight).replace(".",",")} кг`);modal.classList.add("hidden")};
+  document.querySelectorAll("[data-weight]").forEach(b=>b.onclick=()=>{qty=+b.dataset.weight;refresh()});
+  $("#weightMinus").onclick=()=>{qty=Math.max(min,Math.round((qty-step)*10)/10);refresh()};
+  $("#weightPlus").onclick=()=>{qty=Math.round((qty+step)*10)/10;refresh()};
+  $("#confirmWeight").onclick=()=>{
+    cart[id]=Math.round(((cart[id]||0)+qty)*10)/10;
+    persist();
+    toast(`Добавлено: ${labelFor(qty)}`);
+    modal.classList.add("hidden")
+  };
   refresh(); modal.classList.remove("hidden");
 }
 
 function addToCart(id){
   const p=products.find(x=>x.id===id);
-  if(p.unit==="кг"){openWeightPicker(id);return}
+  if(p.unit==="кг"||p.unit==="100 г"){openWeightPicker(id);return}
   cart[id]=(cart[id]||0)+1;persist();toast("Добавлено в корзину")
 }
 function renderCartBadge(){$("#cartCount").textContent=Object.values(cart).reduce((a,b)=>a+b,0)}
@@ -101,7 +116,7 @@ function renderCart(){
   const count=entries.reduce((a,[,q])=>a+q,0);
   $("#cartSubtitle").textContent=`${count} поз.`;
   $("#cartItems").innerHTML=entries.length?entries.map(([id,q])=>{
-    const p=products.find(x=>x.id===+id);const isKg=p.unit==="кг";const qLabel=isKg?`${String(q).replace(".",",")} кг`:q;const step=isKg?.5:1;return `<div class="cart-item"><div><h4>${p.emoji} ${p.name}</h4><div class="meta">${rub(p.price)} × ${qLabel}</div><button class="remove" data-remove="${id}">Удалить</button></div><div class="qty"><button data-minus="${id}" data-step="${step}">−</button><strong>${qLabel}</strong><button data-plus="${id}" data-step="${step}">+</button></div></div>`
+    const p=products.find(x=>x.id===+id);const isKg=p.unit==="кг";const is100g=p.unit==="100 г";const qLabel=isKg?`${String(q).replace(".",",")} кг`:is100g?(q>=10&&q%10===0?`${q/10} кг`:`${Math.round(q*100)} г`):q;const step=isKg?.5:1;return `<div class="cart-item"><div><h4>${p.emoji} ${p.name}</h4><div class="meta">${rub(p.price)} × ${qLabel}</div><button class="remove" data-remove="${id}">Удалить</button></div><div class="qty"><button data-minus="${id}" data-step="${step}">−</button><strong>${qLabel}</strong><button data-plus="${id}" data-step="${step}">+</button></div></div>`
   }).join(""):`<div class="empty">Корзина пока пуста</div>`;
   const subtotal=entries.reduce((sum,[id,q])=>sum+products.find(p=>p.id===+id).price*q,0);
   const delivery=entries.length?deliveryFor(subtotal):0;
@@ -116,7 +131,7 @@ function buildOrder(data){
   const entries=Object.entries(cart).filter(([,q])=>q>0);
   const subtotal=entries.reduce((sum,[id,q])=>sum+products.find(p=>p.id===+id).price*q,0);
   const delivery=deliveryFor(subtotal); const total=subtotal+delivery;
-  const lines=entries.map(([id,q])=>{const p=products.find(x=>x.id===+id);const qLabel=p.unit==="кг"?`${String(q).replace(".",",")} кг`:q;return `• ${p.name}: ${qLabel} × ${rub(p.price)} = ${rub(Math.round(p.price*q))}`});
+  const lines=entries.map(([id,q])=>{const p=products.find(x=>x.id===+id);const qLabel=p.unit==="кг"?`${String(q).replace(".",",")} кг`:p.unit==="100 г"?(q>=10&&q%10===0?`${q/10} кг`:`${Math.round(q*100)} г`):q;return `• ${p.name}: ${qLabel} × ${rub(p.price)} = ${rub(Math.round(p.price*q))}`});
   return `НОВЫЙ ЗАКАЗ\n\n${lines.join("\n")}\n\nТовары: ${rub(subtotal)}\nДоставка: ${delivery?rub(delivery):"Бесплатно"}\nИТОГО: ${rub(total)}\n\nИмя: ${data.name}\nТелефон: ${data.phone}\nАдрес: ${data.address}\nВремя: ${data.slot}\nКомментарий: ${data.comment||"—"}`;
 }
 
