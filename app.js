@@ -16,9 +16,9 @@ const products = [
   {id:13,name:"Укроп",category:"Зелень",unit:"пучок",price:60,emoji:"🌿"},
   {id:14,name:"Петрушка",category:"Зелень",unit:"пучок",price:60,emoji:"🌱"},
   {id:15,name:"Зелёный лук",category:"Зелень",unit:"пучок",price:70,emoji:"🌿"},
-  {id:16,name:"Набор для борща",category:"Наборы",unit:"набор",price:390,emoji:"🧺"},
-  {id:17,name:"Овощной набор на неделю",category:"Наборы",unit:"набор",price:1190,emoji:"📦"},
-  {id:18,name:"Фруктовый набор",category:"Наборы",unit:"набор",price:990,emoji:"🍎"}
+  {id:16,name:"Набор для борща",category:"Наборы",unit:"набор",price:390,emoji:"🧺",contents:["Картофель — 1 кг","Капуста — 1 кг","Свёкла — 0,7 кг","Морковь — 0,5 кг","Лук репчатый — 0,5 кг","Чеснок — 100 г"]},
+  {id:17,name:"Овощной набор на неделю",category:"Наборы",unit:"набор",price:1190,emoji:"📦",contents:["Картофель — 3 кг","Лук репчатый — 1 кг","Морковь — 1 кг","Капуста — 1 кг","Помидоры — 1 кг","Огурцы — 1 кг","Перец сладкий — 0,5 кг","Чеснок — 100 г","Зелень — 2 пучка"]},
+  {id:18,name:"Фруктовый набор",category:"Наборы",unit:"набор",price:990,emoji:"🍎",contents:["Яблоки — 2 кг","Бананы — 1 кг","Апельсины — 1 кг","Лимоны — 0,5 кг"]}
 ];
 
 let activeCategory = "Все";
@@ -42,9 +42,26 @@ function renderProducts(){
     <article class="product">
       <div class="product-emoji">${p.emoji}</div>
       <h3>${p.name}</h3><div class="meta">за ${p.unit}</div>
-      <div class="product-footer"><div class="price">${rub(p.price)}</div><button class="add-btn" data-add="${p.id}">+ В корзину</button></div>
+      <div class="product-footer"><div class="price">${rub(p.price)}</div><button class="add-btn" data-add="${p.id}">+ В корзину</button></div>${p.contents?`<button class="details-btn" data-details="${p.id}">Состав набора</button>`:""}
     </article>`).join(""):`<div class="empty">Ничего не найдено</div>`;
   document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addToCart(+b.dataset.add));
+  document.querySelectorAll("[data-details]").forEach(b=>b.onclick=()=>openSetDetails(+b.dataset.details));
+}
+
+function openSetDetails(id){
+  const p=products.find(x=>x.id===id); if(!p||!p.contents)return;
+  let modal=$("#setDetailsModal");
+  if(!modal){
+    modal=document.createElement("div"); modal.id="setDetailsModal"; modal.className="modal hidden";
+    modal.innerHTML='<div class="modal-card"><div class="drawer-head"><div><h2 id="setDetailsTitle"></h2><p>Что входит в набор</p></div><button id="closeSetDetails" class="icon-btn">✕</button></div><div id="setDetailsList" class="set-list"></div><button id="addSetFromDetails" class="primary full">Добавить набор в корзину</button></div>';
+    document.body.appendChild(modal);
+    $("#closeSetDetails").onclick=()=>modal.classList.add("hidden");
+    modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.add("hidden")});
+  }
+  $("#setDetailsTitle").textContent=`${p.emoji} ${p.name}`;
+  $("#setDetailsList").innerHTML=p.contents.map(x=>`<div class="set-item">✓ ${x}</div>`).join("")+`<div class="set-price">Цена набора: <strong>${rub(p.price)}</strong></div>`;
+  $("#addSetFromDetails").onclick=()=>{addToCart(id);modal.classList.add("hidden")};
+  modal.classList.remove("hidden");
 }
 
 function addToCart(id){cart[id]=(cart[id]||0)+1;persist();toast("Добавлено в корзину")}
