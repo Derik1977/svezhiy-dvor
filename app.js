@@ -64,23 +64,51 @@ function openSetDetails(id){
   modal.classList.remove("hidden");
 }
 
-function addToCart(id){cart[id]=(cart[id]||0)+1;persist();toast("Добавлено в корзину")}
+function openWeightPicker(id){
+  const p=products.find(x=>x.id===id); if(!p)return;
+  let modal=$("#weightModal");
+  if(!modal){
+    modal=document.createElement("div"); modal.id="weightModal"; modal.className="modal hidden";
+    modal.innerHTML='<div class="modal-card weight-card"><div class="drawer-head"><div><h2 id="weightTitle"></h2><p>Выберите нужный вес</p></div><button id="closeWeight" class="icon-btn">✕</button></div><div class="weight-presets"><button data-weight="0.5">0,5 кг</button><button data-weight="1">1 кг</button><button data-weight="1.5">1,5 кг</button><button data-weight="2">2 кг</button><button data-weight="3">3 кг</button></div><div class="weight-stepper"><button id="weightMinus">−</button><strong id="weightValue">1 кг</strong><button id="weightPlus">+</button></div><div class="weight-total">Сумма: <strong id="weightTotal"></strong></div><button id="confirmWeight" class="primary full">Добавить в корзину</button></div>';
+    document.body.appendChild(modal);
+    $("#closeWeight").onclick=()=>modal.classList.add("hidden");
+    modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.add("hidden")});
+  }
+  let weight=1;
+  const refresh=()=>{
+    $("#weightValue").textContent=(Number.isInteger(weight)?weight:weight.toFixed(1).replace(".",","))+" кг";
+    $("#weightTotal").textContent=rub(Math.round(p.price*weight));
+    document.querySelectorAll("[data-weight]").forEach(b=>b.classList.toggle("active",+b.dataset.weight===weight));
+  };
+  $("#weightTitle").textContent=`${p.emoji} ${p.name}`;
+  document.querySelectorAll("[data-weight]").forEach(b=>b.onclick=()=>{weight=+b.dataset.weight;refresh()});
+  $("#weightMinus").onclick=()=>{weight=Math.max(.5,Math.round((weight-.5)*10)/10);refresh()};
+  $("#weightPlus").onclick=()=>{weight=Math.round((weight+.5)*10)/10;refresh()};
+  $("#confirmWeight").onclick=()=>{cart[id]=Math.round(((cart[id]||0)+weight)*10)/10;persist();toast(`Добавлено: ${String(weight).replace(".",",")} кг`);modal.classList.add("hidden")};
+  refresh(); modal.classList.remove("hidden");
+}
+
+function addToCart(id){
+  const p=products.find(x=>x.id===id);
+  if(p.unit==="кг"){openWeightPicker(id);return}
+  cart[id]=(cart[id]||0)+1;persist();toast("Добавлено в корзину")
+}
 function renderCartBadge(){$("#cartCount").textContent=Object.values(cart).reduce((a,b)=>a+b,0)}
 function deliveryFor(subtotal){return subtotal>=2500?0:subtotal>=1500?100:200}
 
 function renderCart(){
   const entries=Object.entries(cart).filter(([,q])=>q>0);
   const count=entries.reduce((a,[,q])=>a+q,0);
-  $("#cartSubtitle").textContent=`${count} шт.`;
+  $("#cartSubtitle").textContent=`${count} поз.`;
   $("#cartItems").innerHTML=entries.length?entries.map(([id,q])=>{
-    const p=products.find(x=>x.id===+id);return `<div class="cart-item"><div><h4>${p.emoji} ${p.name}</h4><div class="meta">${rub(p.price)} × ${q}</div><button class="remove" data-remove="${id}">Удалить</button></div><div class="qty"><button data-minus="${id}">−</button><strong>${q}</strong><button data-plus="${id}">+</button></div></div>`
+    const p=products.find(x=>x.id===+id);const isKg=p.unit==="кг";const qLabel=isKg?`${String(q).replace(".",",")} кг`:q;const step=isKg?.5:1;return `<div class="cart-item"><div><h4>${p.emoji} ${p.name}</h4><div class="meta">${rub(p.price)} × ${qLabel}</div><button class="remove" data-remove="${id}">Удалить</button></div><div class="qty"><button data-minus="${id}" data-step="${step}">−</button><strong>${qLabel}</strong><button data-plus="${id}" data-step="${step}">+</button></div></div>`
   }).join(""):`<div class="empty">Корзина пока пуста</div>`;
   const subtotal=entries.reduce((sum,[id,q])=>sum+products.find(p=>p.id===+id).price*q,0);
   const delivery=entries.length?deliveryFor(subtotal):0;
   $("#subtotal").textContent=rub(subtotal);$("#deliveryCost").textContent=delivery?rub(delivery):entries.length?"Бесплатно":"0 ₽";$("#total").textContent=rub(subtotal+delivery);
   $("#checkoutButton").disabled=!entries.length;
-  document.querySelectorAll("[data-plus]").forEach(b=>b.onclick=()=>{cart[b.dataset.plus]++;persist();renderCart()});
-  document.querySelectorAll("[data-minus]").forEach(b=>b.onclick=()=>{cart[b.dataset.minus]--;if(cart[b.dataset.minus]<=0)delete cart[b.dataset.minus];persist();renderCart()});
+  document.querySelectorAll("[data-plus]").forEach(b=>b.onclick=()=>{const s=+b.dataset.step||1;cart[b.dataset.plus]=Math.round(((cart[b.dataset.plus]||0)+s)*10)/10;persist();renderCart()});
+  document.querySelectorAll("[data-minus]").forEach(b=>b.onclick=()=>{const s=+b.dataset.step||1;cart[b.dataset.minus]=Math.round(((cart[b.dataset.minus]||0)-s)*10)/10;if(cart[b.dataset.minus]<=0)delete cart[b.dataset.minus];persist();renderCart()});
   document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{delete cart[b.dataset.remove];persist();renderCart()});
 }
 
@@ -88,7 +116,7 @@ function buildOrder(data){
   const entries=Object.entries(cart).filter(([,q])=>q>0);
   const subtotal=entries.reduce((sum,[id,q])=>sum+products.find(p=>p.id===+id).price*q,0);
   const delivery=deliveryFor(subtotal); const total=subtotal+delivery;
-  const lines=entries.map(([id,q])=>{const p=products.find(x=>x.id===+id);return `• ${p.name}: ${q} × ${rub(p.price)} = ${rub(p.price*q)}`});
+  const lines=entries.map(([id,q])=>{const p=products.find(x=>x.id===+id);const qLabel=p.unit==="кг"?`${String(q).replace(".",",")} кг`:q;return `• ${p.name}: ${qLabel} × ${rub(p.price)} = ${rub(Math.round(p.price*q))}`});
   return `НОВЫЙ ЗАКАЗ\n\n${lines.join("\n")}\n\nТовары: ${rub(subtotal)}\nДоставка: ${delivery?rub(delivery):"Бесплатно"}\nИТОГО: ${rub(total)}\n\nИмя: ${data.name}\nТелефон: ${data.phone}\nАдрес: ${data.address}\nВремя: ${data.slot}\nКомментарий: ${data.comment||"—"}`;
 }
 
