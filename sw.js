@@ -1,4 +1,4 @@
-const CACHE="fresh-yard-v4";
+const CACHE="fresh-yard-v6";
 const ASSETS=["./","index.html","styles.css","app.js","manifest.webmanifest","icon-192.png","icon-512.png"];
 
 self.addEventListener("install",event=>{
