@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2f6b3a" />
+  <meta name="description" content="Свежие овощи и фрукты с доставкой по станице" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Свежий двор — доставка овощей</title>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">🥕 Свежий двор</div>
+      <div class="tagline">Овощи и фрукты с доставкой по станице</div>
+    </div>
+    <button id="cartButton" class="cart-btn" aria-label="Корзина">🛒 <span id="cartCount">0</span></button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="pill">Доставка сегодня</span>
+        <h1>Свежие продукты без поездки в магазин</h1>
+        <p>Выберите продукты, укажите адрес и удобное окно доставки. Минимум действий — максимум свежести.</p>
+      </div>
+      <div class="hero-card">
+        <div><strong>от 1 500 ₽</strong><span>доставка 100 ₽</span></div>
+        <div><strong>от 2 500 ₽</strong><span>доставка бесплатно</span></div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <input id="searchInput" type="search" placeholder="Найти продукт…" />
+      <div id="categoryTabs" class="tabs"></div>
+    </section>
+
+    <section>
+      <div id="productGrid" class="product-grid"></div>
+    </section>
+  </main>
+
+  <div id="cartDrawer" class="drawer hidden" role="dialog" aria-modal="true" aria-label="Корзина">
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <div>
+          <h2>Корзина</h2>
+          <p id="cartSubtitle">0 товаров</p>
+        </div>
+        <button id="closeCart" class="icon-btn">✕</button>
+      </div>
+      <div id="cartItems" class="cart-items"></div>
+      <div class="summary">
+        <div><span>Товары</span><strong id="subtotal">0 ₽</strong></div>
+        <div><span>Доставка</span><strong id="deliveryCost">0 ₽</strong></div>
+        <div class="total"><span>Итого</span><strong id="total">0 ₽</strong></div>
+      </div>
+      <button id="checkoutButton" class="primary full">Оформить заказ</button>
+    </div>
+  </div>
+
+  <div id="checkoutModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Оформление заказа">
+    <form id="checkoutForm" class="modal-card">
+      <div class="drawer-head">
+        <div>
+          <h2>Оформление заказа</h2>
+          <p>Оплата при получении</p>
+        </div>
+        <button type="button" id="closeCheckout" class="icon-btn">✕</button>
+      </div>
+
+      <label>Имя
+        <input name="name" required placeholder="Как к вам обращаться" />
+      </label>
+      <label>Телефон
+        <input name="phone" required inputmode="tel" placeholder="+7 900 000-00-00" />
+      </label>
+      <label>Адрес доставки
+        <textarea name="address" required rows="2" placeholder="Улица, дом, ориентир"></textarea>
+      </label>
+      <label>Время доставки
+        <select name="slot" required>
+          <option value="10:00–12:00">10:00–12:00</option>
+          <option value="14:00–16:00">14:00–16:00</option>
+          <option value="18:00–20:00">18:00–20:00</option>
+        </select>
+      </label>
+      <label>Комментарий
+        <textarea name="comment" rows="2" placeholder="Например: позвонить за 10 минут"></textarea>
+      </label>
+
+      <div class="checkout-note">После нажатия заказ будет подготовлен в виде сообщения. Его можно сразу отправить продавцу в WhatsApp или скопировать.</div>
+      <button class="primary full" type="submit">Создать заказ</button>
+    </form>
+  </div>
+
+  <div id="orderModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Заказ готов">
+    <div class="modal-card">
+      <div class="drawer-head">
+        <div>
+          <h2>Заказ готов</h2>
+          <p>Отправьте его продавцу</p>
+        </div>
+        <button id="closeOrder" class="icon-btn">✕</button>
+      </div>
+      <textarea id="orderText" rows="14" readonly></textarea>
+      <div class="action-row">
+        <button id="copyOrder" class="secondary">Скопировать</button>
+        <button id="whatsAppOrder" class="primary">WhatsApp</button>
+      </div>
+      <small class="muted">Номер WhatsApp продавца задаётся в файле <code>app.js</code>. Пока номер не указан, откроется WhatsApp без адресата.</small>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
