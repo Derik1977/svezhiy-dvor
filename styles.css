@@ -23,3 +23,16 @@ main{max-width:1100px;margin:0 auto;padding:18px 16px 70px}.hero{display:grid;gr
 .weight-stepper strong{text-align:center;font-size:26px}
 .weight-total{display:flex;justify-content:space-between;align-items:center;padding:14px 0 18px;font-size:18px}
 @media(max-width:480px){.weight-presets{grid-template-columns:repeat(3,1fr)}}
+
+.set-builder-card{width:min(760px,100%)}
+.set-status{background:var(--accent-2);color:var(--accent);padding:11px 12px;border-radius:12px;font-weight:700;margin-bottom:12px}
+.set-builder-items{display:grid;gap:10px}
+.set-builder-row{display:grid;grid-template-columns:minmax(220px,1fr) auto auto auto;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:15px;padding:10px}
+.set-builder-product{display:flex;gap:8px;align-items:center}.set-builder-product select{min-width:0;width:100%;border:1px solid var(--line);border-radius:10px;padding:9px;background:#fff}
+.set-builder-emoji{font-size:24px}.set-builder-weight{display:flex;align-items:center;gap:8px;white-space:nowrap}.set-builder-weight button{width:32px;height:32px;border:0;border-radius:9px;background:#eef0eb;font-weight:900;cursor:pointer}
+.set-builder-lineprice{font-weight:900;white-space:nowrap}.set-remove{border:0;background:none;color:var(--danger);cursor:pointer}.set-remove.disabled{opacity:.35;cursor:not-allowed}
+.set-add-position{margin:12px 0}.set-builder-summary{display:grid;gap:8px;border-top:1px solid var(--line);padding:14px 0}.set-builder-summary>div{display:flex;justify-content:space-between}.set-builder-total{font-size:20px}
+.custom-set-lines{font-size:12px;color:var(--muted);margin:6px 0;line-height:1.45}.custom-set-cart{align-items:start}
+.clear-cart-btn{width:100%;margin:0 0 10px;border:1px solid #d9b1ad;background:#fff;color:var(--danger);border-radius:13px;padding:12px 14px;font-weight:800;cursor:pointer}
+.clear-cart-btn:hover{background:#fff4f3}
+@media(max-width:650px){.set-builder-row{grid-template-columns:1fr auto}.set-builder-lineprice{grid-column:1}.set-remove{grid-column:2}.set-builder-product{grid-column:1 / -1}}
